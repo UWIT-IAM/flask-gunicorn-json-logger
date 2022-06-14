@@ -1,9 +1,14 @@
 version: 1
 formatters:
   default:
+    # This will look something like:
+    #  [INFO][2022-01-01T11:00:00][app]: Here is some information for you, friend.
     format: "[%(levelname)s][%(asctime)s][%(module)s]: %(message)s"
+  # For more information about the fields included in this JSON,
+  # please refer to README.md
   json:
     '()': uw_it.flask_util.logger.JsonFormatter
+
 handlers:
   wsgi:
     level: INFO
@@ -13,20 +18,28 @@ handlers:
     level: ERROR
     class: logging.StreamHandler
     formatter: default
+
 loggers:
   glogging:
     # Turn off all but critical `glogging` messages, because it's
     # a very noisy module that is out of our control.
     level: CRITICAL
     propagate: false
+  # This is the application logger. Any children of this logger
+  # will inherit its settings. This is attached to the app instance
+  # when the FlaskJSONLogger extension is invoked, and is accessible
+  # from `app.logger`.
   gunicorn.error.app:
     level: DEBUG
+    # Set propagate to false so that things don't get logged twice.
     propagate: false
     handlers:
       - wsgi
+  # This is the logger that by default captures all logging from
+  # the app running behind gunicorn. We use a different handler for this
+  # because messages from this logger are not generated from within the
+  # application, so won't have some important contexts required by the
+  # json logger.
   gunicorn.error:
-    handlers:
-      - gunicorn
-  gunicorn.error.app.unscoped:
     handlers:
       - gunicorn
